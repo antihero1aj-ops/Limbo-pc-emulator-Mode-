@@ -1,5 +1,6 @@
 package com.example.limbo.ui.screens
 
+import com.example.limbo.ui.desktop.FullPcDesktopEnvironment
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -211,12 +212,13 @@ fun VmRuntimeScreen(
                                 onSendCommand = { cmd -> runtimeManager.executeDosCommand(cmd) }
                             )
                         } else {
-                            DesktopOsSimulationScreen(
+                            FullPcDesktopEnvironment(
                                 config = config,
                                 cubeAngle = cubeAngle,
                                 isVirglActive = isVirglActive,
                                 telemetry = telemetry,
-                                onCubeTap = { runtimeManager.sendKeyPress("3D_INTERACT") }
+                                onCubeTap = { runtimeManager.sendKeyPress("3D_INTERACT") },
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
 
@@ -551,172 +553,6 @@ private fun GpuInitScreen(config: MachineConfig?) {
                 fontFamily = FontFamily.Monospace,
                 fontSize = 11.sp
             )
-        }
-    }
-}
-
-@Composable
-private fun DesktopOsSimulationScreen(
-    config: MachineConfig?,
-    cubeAngle: Float,
-    isVirglActive: Boolean,
-    telemetry: com.example.limbo.simulator.VmTelemetry,
-    onCubeTap: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        Color(0xFF0D1B2A),
-                        Color(0xFF1B263B),
-                        Color(0xFF0F2027)
-                    )
-                )
-            )
-    ) {
-        // Desktop Wallpaper Grid Pattern
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val step = 40.dp.toPx()
-            var x = 0f
-            while (x < size.width) {
-                drawLine(
-                    color = Color(0xFF1E2D4A).copy(alpha = 0.25f),
-                    start = Offset(x, 0f),
-                    end = Offset(x, size.height),
-                    strokeWidth = 1f
-                )
-                x += step
-            }
-            var y = 0f
-            while (y < size.height) {
-                drawLine(
-                    color = Color(0xFF1E2D4A).copy(alpha = 0.25f),
-                    start = Offset(0f, y),
-                    end = Offset(size.width, y),
-                    strokeWidth = 1f
-                )
-                y += step
-            }
-        }
-
-        // Active 3D GPU Demo Window (The VirGL 3D Benchmark Window!)
-        Card(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxWidth(0.92f)
-                .height(290.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .clickable { onCubeTap() },
-            colors = CardDefaults.cardColors(containerColor = LimboSurfaceDark.copy(alpha = 0.94f)),
-            border = androidx.compose.foundation.BorderStroke(1.5.dp, if (isVirglActive) GpuCyan else BorderSubtleDark)
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // Window Title Bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF121B2F))
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.VideogameAsset, contentDescription = null, tint = GpuCyan, modifier = Modifier.size(14.dp))
-                        Text(
-                            text = if (isVirglActive) "VirGL 3D Hardware Accelerated Test - GLXGears / Cube" else "Standard VGA Output",
-                            color = TextPrimaryDark,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(HardwareGreen))
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(WarningAmber))
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(DangerCrimson))
-                    }
-                }
-
-                // 3D Canvas
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Virgl3dCubeCanvas(
-                        angleDegrees = cubeAngle,
-                        isHardwareAccelerated = isVirglActive,
-                        modifier = Modifier.fillMaxSize()
-                    )
-
-                    // Overlay HUD inside the 3D window
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
-                    ) {
-                        Text(
-                            text = "ENGINE: ${if (isVirglActive) "Host OpenGL ES 3.2 Passthrough" else "TCG Software Rasterizer"}",
-                            color = GpuCyan,
-                            fontSize = 9.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "FPS: ${String.format("%.1f", telemetry.fps)} | VRAM: ${telemetry.vramUsedMb} MB",
-                            color = HardwareGreen,
-                            fontSize = 9.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
-                }
-
-                // Window Status Bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF0A0F1C))
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("3D Vertex Pipeline: 60 FPS", color = TextSecondaryDark, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
-                    Text("Tap to trigger guest draw call", color = GpuCyan, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
-                }
-            }
-        }
-
-        // Desktop Taskbar (Bottom)
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(34.dp)
-                .background(Color(0xFF090E1A).copy(alpha = 0.95f))
-                .border(1.dp, BorderSubtleDark)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(GpuCyan.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("OS", color = GpuCyan, fontWeight = FontWeight.Bold, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                }
-                Text("Limbo PC 6.1.0", color = TextSecondaryDark, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-            }
-
-            Text("VirtIO-Net: Online • 1080p", color = TextSecondaryDark, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
         }
     }
 }
