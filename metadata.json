@@ -1,0 +1,6 @@
+{
+  "name": "Limbo PC Simulator",
+  "description": "Limbo PC Simulator with 3D GPU acceleration, VirGL, KVM hardware virtualization, multi-core MTTCG, and modern PC emulation controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
